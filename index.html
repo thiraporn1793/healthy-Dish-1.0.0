@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>กินดี เลือกได้</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS STYLES (คงเดิม ไม่มีการเปลี่ยนแปลง) --- */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Press Start 2P', 'Mitr', sans-serif;
+            background-color: #000;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            position: relative;
+            height: 98vh;
+            width: calc(98vh * (9 / 16));
+            max-width: 98vw;
+            max-height: calc(98vw * (16 / 9));
+            margin: auto;
+            background-image: url('bg-pixel-forest.png');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            color: white;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #gameArea {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .game-info {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 96%;
+            max-width: 540px;
+            height: 80px;
+            padding: 8px 25px;
+            margin-top: 8px;
+            background-image: url('scoreboard.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-sizing: border-box;
+            font-size: 1.25em;
+            color: #fff;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .info-box {
+            flex: 1;
+            text-align: center;
+        }
+
+        .menu-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            width: 85%;
+            max-width: 450px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+            z-index: 10;
+        }
+
+        .menu-container h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .menu-container h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .menu-container p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #viewRankingButton, #backToMainButton {
+            background-color: #008CBA;
+        }
+        #viewRankingButton:hover, #backToMainButton:hover {
+            background-color: #007B9A;
+        }
+
+        .character-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .character-choice {
+            width: 110px;
+            height: 110px;
+            cursor: pointer;
+            border: 4px solid transparent;
+            border-radius: 15px;
+            transition: transform 0.2s, border-color 0.3s;
+            object-fit: contain;
+        }
+
+        .character-choice:hover {
+            transform: scale(1.1);
+            border-color: #4CAF50;
+        }
+
+        #playerNameInput {
+            padding: 10px;
+            font-size: 1em;
+            width: 80%;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #rankingTable {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+
+        #rankingTable th, #rankingTable td {
+            padding: 8px;
+            border-bottom: 1px solid #555;
+        }
+
+        #rankingTable th {
+            background-color: #333;
+        }
+
+        #rankingTable tr:nth-child(even) {
+            background-color: #222;
+        }
+
+        #pauseButton, #resumeButton {
+            background-color: #FF9800;
+            margin-left: 10px;
+            font-size: 1em;
+            padding: 8px 18px;
+            border-radius: 8px;
+        }
+        #pauseButton:hover, #resumeButton:hover {
+            background-color: #F57C00;
+        }
+
+        #countdownOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 20;
+            justify-content: center;
+            align-items: center;
+            font-size: 5em;
+            color: #fff;
+            text-align: center;
+        }
+
+        /* ปุ่มเสียงในเมนู */
+        .menu-sound-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 2em;
+            cursor: pointer;
+            z-index: 20;
+            text-shadow: 2px 2px 4px #000;
+        }
+        /* ปุ่มเสียงใน UI เกม */
+        #gameSoundBtn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 2em;
+            cursor: pointer;
+            margin-left: 10px;
+            text-shadow: 2px 2px 4px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="mainMenu" class="menu-container">
+            <button class="menu-sound-btn" id="menuSoundBtn1">🔊</button>
+            <h1>กินดี เลือกได้</h1>
+            <p>เลือกกินอาหารที่มีประโยชน์เพื่อทำคะแนนสูงสุดใน 60 วินาที!</p>
+            <div style="background:rgba(0,0,0,0.5);padding:10px;border-radius:8px;margin-bottom:10px;">
+                <b>คำแนะนำ:</b><br>
+                - ใช้เมาส์หรือแตะหน้าจอเพื่อควบคุมตัวละคร<br>
+                - หลีกเลี่ยงอาหารที่ไม่ดี (คะแนนติดลบ)<br>
+                - พยายามเก็บอาหารที่ดีเพื่อเพิ่มคะแนน<br>
+            </div>
+            <button id="startButton">เริ่มเกม</button>
+            <button id="viewRankingButton">ดูอันดับสูงสุด</button>
+        </div>
+
+        <div id="characterSelectMenu" class="menu-container" style="display: none;">
+            <button class="menu-sound-btn" id="menuSoundBtn2">🔊</button>
+            <h2>เลือกตัวละครของคุณ</h2>
+            <div class="character-options">
+                <img src="male.png" id="maleCharacter" alt="ตัวละครชาย" class="character-choice">
+                <img src="female.png" id="femaleCharacter" alt="ตัวละครหญิง" class="character-choice">
+            </div>
+        </div>
+
+        <div id="gameArea">
+            <div id="gameUI" class="game-info">
+                <div class="info-box">คะแนน: <span id="score">0</span></div>
+                <div class="info-box">เวลา: <span id="timer">60</span></div>
+                <button id="pauseButton">หยุด</button>
+                <button id="resumeButton" style="display:none;">เล่นต่อ</button>
+                <button id="gameSoundBtn">🔊</button>
+            </div>
+            <div id="countdownOverlay"></div>
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="gameOverScreen" class="menu-container" style="display: none;">
+            <button class="menu-sound-btn" id="menuSoundBtn3">🔊</button>
+            <h2>หมดเวลา!</h2>
+            <h3>คะแนนของคุณ: <span id="finalScore">0</span></h3>
+            <p id="scoreMessage"></p>
+            <div style="margin:15px 0 10px 0;color:#FFD700;">
+                อย่าลืมดูแลสุขภาพ และกินอาหารที่มีประโยชน์กันด้วยนะครับ
+            </div>
+            <input type="text" id="playerNameInput" placeholder="ใส่ชื่อของคุณที่นี่" maxlength="15">
+            <button id="saveScoreButton">บันทึกคะแนน</button>
+        </div>
+
+        <div id="rankingScreen" class="menu-container" style="display: none;">
+            <button class="menu-sound-btn" id="menuSoundBtn4">🔊</button>
+            <h2>10 อันดับสูงสุด</h2>
+            <table id="rankingTable">
+                <thead>
+                    <tr><th>อันดับ</th><th>ชื่อผู้เล่น</th><th>คะแนน</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button id="backToMainButton">กลับไปหน้าหลัก</button>
+        </div>
+        
+    </div>
+    <audio id="background-music" src="background-music.mp3" loop></audio>
+    <script>
+    // --- 1. การตั้งค่า Element และ Canvas ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const mainMenu = document.getElementById('mainMenu');
+    const characterSelectMenu = document.getElementById('characterSelectMenu');
+    const gameArea = document.getElementById('gameArea');
+    const gameUI = document.getElementById('gameUI');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const rankingScreen = document.getElementById('rankingScreen');
+
+    const startButton = document.getElementById('startButton');
+    const viewRankingButton = document.getElementById('viewRankingButton');
+    const maleCharacter = document.getElementById('maleCharacter');
+    const femaleCharacter = document.getElementById('femaleCharacter');
+    const saveScoreButton = document.getElementById('saveScoreButton');
+    const backToMainButton = document.getElementById('backToMainButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const resumeButton = document.getElementById('resumeButton');
+
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+    const finalScoreElement = document.getElementById('finalScore');
+    const scoreMessageElement = document.getElementById('scoreMessage');
+    const playerNameInput = document.getElementById('playerNameInput');
+    const rankingTableBody = document.querySelector('#rankingTable tbody');
+    const countdownOverlay = document.getElementById('countdownOverlay');
+
+    // --- 2. การตั้งค่าตัวแปรเกม ---
+    let score, timeRemaining, gameInterval, items, gameOver, isDragging;
+    let chosenPlayerImg = new Image();
+    let isPaused = false;
+    let countdownTimeout = null;
+    const GAME_DURATION = 60;
+
+    const player = {
+        width: 50,
+        height: 70,
+        x: 0,
+        y: 0,
+    };
+
+    // --- 3. โหลดรูปภาพและเสียง ---
+    // [UPDATE] เพิ่มรายการอาหารทั้งหมด
+    const foodImages = {
+        'Food (1)': 'Food (1).png',
+        'Food (2)': 'Food (2).png',
+        'Food (3)': 'Food (3).png',
+        'Food (4)': 'Food (4).png',
+        'Food (5)': 'Food (5).png',
+        'Food (6)': 'Food (6).png',
+        'Food (7)': 'Food (7).png',
+        'Food (8)': 'Food (8).png',
+        'Food (9)': 'Food (9).png',
+        'Food (10)': 'Food (10).png',
+        'Food (11)': 'Food (11).png',
+        'Food (12)': 'Food (12).png',
+        'Food (13)': 'Food (13).png'
+    };
+    const allItemImages = {};
+    for (const key in foodImages) {
+        allItemImages[key] = new Image();
+        allItemImages[key].src = foodImages[key];
+    }
+    
+    const plusOneImg = new Image();
+    plusOneImg.src = 'oneplus.gif';
+    const crossImg = new Image();
+    crossImg.src = 'cross.png';
+
+    const scoreUpAudio = new Audio('scoreUp.mp3');
+    const scoreDownAudio = new Audio('scoreDown.mp3');
+
+    // --- 4. ฟังก์ชันจัดการหน้าจอ (UI Flow) ---
+    function showScreen(screen) {
+        [mainMenu, characterSelectMenu, gameArea, gameOverScreen, rankingScreen].forEach(s => s.style.display = 'none');
+        screen.style.display = 'flex';
+    }
+
+    startButton.addEventListener('click', () => showScreen(characterSelectMenu));
+    viewRankingButton.addEventListener('click', () => {
+        populateRankingTable();
+        showScreen(rankingScreen);
+    });
+    backToMainButton.addEventListener('click', () => showScreen(mainMenu));
+
+    maleCharacter.addEventListener('click', () => selectCharacter(maleCharacter));
+    femaleCharacter.addEventListener('click', () => selectCharacter(femaleCharacter));
+
+    function selectCharacter(imgElement) {
+        chosenPlayerImg.src = imgElement.src;
+        chosenPlayerImg.onload = () => {
+             showScreen(gameArea);
+             resizeCanvas();
+             pauseButton.style.display = 'inline-block';
+             resumeButton.style.display = 'none';
+             startCountdown(startGame);
+        };
+        chosenPlayerImg.onerror = () => {
+            console.error("ไม่สามารถโหลดรูปตัวละครได้:", imgElement.src);
+            alert("เกิดข้อผิดพลาดในการโหลดรูปภาพตัวละคร");
+        }
+    }
+
+    saveScoreButton.addEventListener('click', () => {
+        const playerName = playerNameInput.value.trim();
+        if (playerName) {
+            saveScoreButton.disabled = true;
+            saveScoreButton.textContent = "กำลังบันทึก...";
+            saveScore(playerName, score);
+        } else {
+            playerNameInput.placeholder = "กรุณาใส่ชื่อ!";
+            playerNameInput.style.border = "2px solid red";
+            setTimeout(() => {
+                playerNameInput.placeholder = "ใส่ชื่อของคุณที่นี่";
+                playerNameInput.style.border = "1px solid #ccc";
+            }, 2000);
+        }
+    });
+
+    pauseButton.addEventListener('click', pauseGame);
+    resumeButton.addEventListener('click', resumeGame);
+
+    function pauseGame() {
+        if (gameOver || isPaused) return;
+        isPaused = true;
+        pauseButton.style.display = 'none';
+        resumeButton.style.display = 'inline-block';
+    }
+
+    function resumeGame() {
+        if (gameOver || !isPaused) return;
+        isPaused = false;
+        pauseButton.style.display = 'inline-block';
+        resumeButton.style.display = 'none';
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startCountdown(callback) {
+        countdownOverlay.style.display = 'flex';
+        let count = 3;
+        countdownOverlay.textContent = count;
+        function next() {
+            count--;
+            if (count > 0) {
+                countdownOverlay.textContent = count;
+                countdownTimeout = setTimeout(next, 700);
+            } else {
+                countdownOverlay.textContent = "เริ่ม!";
+                countdownTimeout = setTimeout(() => {
+                    countdownOverlay.style.display = 'none';
+                    callback();
+                }, 700);
+            }
+        }
+        countdownTimeout = setTimeout(next, 700);
+    }
+
+    // --- 5. ฟังก์ชันหลักของเกม ---
+    function startGame() {
+        score = 0;
+        timeRemaining = GAME_DURATION;
+        items = [];
+        gameOver = false;
+        isDragging = false;
+        isPaused = false;
+        playerNameInput.value = '';
+        pauseButton.style.display = 'inline-block';
+        resumeButton.style.display = 'none';
+
+        showScreen(gameArea);
+
+        setTimeout(() => {
+            resizeCanvas();
+            player.x = (canvas.width / 2) - (player.width / 2);
+            player.y = canvas.height - player.height - 10;
+
+            gameInterval = setInterval(() => {
+                if (!isPaused) {
+                    timeRemaining--;
+                    if (timeRemaining <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+
+            requestAnimationFrame(gameLoop);
+        }, 0);
+    }
+
+    function endGame() {
+        gameOver = true;
+        clearInterval(gameInterval);
+        if (countdownTimeout) clearTimeout(countdownTimeout);
+        pauseButton.style.display = 'none';
+        resumeButton.style.display = 'none';
+        finalScoreElement.textContent = score;
+        if (score <= 10) {
+            scoreMessageElement.textContent = "คุณยังเลือกอาหารได้ไม่ดีพอ";
+        } else if (score <= 20) {
+            scoreMessageElement.textContent = "คุณเลือกอาหารได้ดี";
+        } else {
+            scoreMessageElement.textContent = "คุณเลือกอาหารได้เยี่ยมมาก";
+        }
+        showScreen(gameOverScreen);
+        saveScoreButton.disabled = false;
+        saveScoreButton.textContent = "บันทึกคะแนน";
+    }
+
+    // --- 6. Game Loop และการวาด ---
+    function gameLoop() {
+        if (gameOver || isPaused) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        updateItems();
+        detectCollisions();
+        
+        drawPlayer();
+        drawItems();
+        drawScoreEffects();
+        drawUI();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function drawPlayer() {
+        if (chosenPlayerImg.complete && chosenPlayerImg.naturalWidth !== 0) {
+            ctx.drawImage(chosenPlayerImg, player.x, player.y, player.width, player.height);
+        }
+    }
+
+    function drawItems() {
+        items.forEach(item => {
+            ctx.drawImage(item.image, item.x, item.y, item.size, item.size);
+        });
+    }
+
+    function drawUI() {
+        scoreElement.textContent = score;
+        timerElement.textContent = timeRemaining;
+    }
+
+    // --- 7. การจัดการไอเท็ม ---
+    let itemSpawnCounter = 0;
+    function updateItems() {
+        itemSpawnCounter++;
+        if (itemSpawnCounter > 50) {
+            spawnItem();
+            itemSpawnCounter = 0;
+        }
+
+        for (let i = items.length - 1; i >= 0; i--) {
+            items[i].y += items[i].speed;
+            if (items[i].y > canvas.height) {
+                items.splice(i, 1);
+            }
+        }
+    }
+
+    function spawnItem() {
+        const itemSize = canvas.width * 0.16; // เพิ่มขนาด Object
+        const itemSpeed = canvas.height * 0.004;
+
+        const foodKeys = Object.keys(foodImages);
+        const type = foodKeys[Math.floor(Math.random() * foodKeys.length)];
+        const image = allItemImages[type];
+
+        // กำหนดอาหารที่คะแนนติดลบ (Food (3), (4), (5), (6), (11), (13))
+        const minusFoods = ['Food (3)', 'Food (4)', 'Food (5)', 'Food (6)', 'Food (11)', 'Food (13)'];
+        const points = minusFoods.includes(type) ? -1 : 1;
+
+        items.push({
+            x: Math.random() * (canvas.width - itemSize),
+            y: -itemSize,
+            size: itemSize,
+            speed: itemSpeed + (Math.random() * 1.5),
+            image: image,
+            points: points,
+            type: type
+        });
+    }
+
+    let scoreEffects = [];
+    function showScoreEffect(x, y, type) {
+        scoreEffects.push({
+            x, y, type,
+            alpha: 1,
+            life: 30
+        });
+    }
+
+    function drawScoreEffects() {
+        scoreEffects.forEach(effect => {
+            ctx.save();
+            ctx.globalAlpha = effect.alpha;
+            if (effect.type === 'plus') {
+                ctx.drawImage(plusOneImg, effect.x, effect.y, 40, 40);
+            } else if (effect.type === 'minus') {
+                ctx.drawImage(crossImg, effect.x, effect.y, 40, 40);
+            }
+            ctx.restore();
+            effect.y -= 1;
+            effect.alpha -= 0.03;
+            effect.life--;
+        });
+        scoreEffects = scoreEffects.filter(e => e.life > 0 && e.alpha > 0);
+    }
+
+    // --- 8. การควบคุมและการชน ---
+    function detectCollisions() {
+        for (let i = items.length - 1; i >= 0; i--) {
+            const item = items[i];
+            if (player.x < item.x + item.size &&
+                player.x + player.width > item.x &&
+                player.y < item.y + item.size &&
+                player.y + player.height > item.y) {
+
+                if (item.points > 0) {
+                    scoreUpAudio.currentTime = 0; scoreUpAudio.play();
+                    showScoreEffect(item.x, item.y, 'plus');
+                } else {
+                    scoreDownAudio.currentTime = 0; scoreDownAudio.play();
+                    showScoreEffect(item.x, item.y, 'minus');
+                }
+
+                score += item.points;
+                if (score < 0) score = 0;
+                items.splice(i, 1);
+            }
+        }
+    }
+    
+    function movePlayer(event) {
+        if (isPaused || gameOver) return;
+        const rect = canvas.getBoundingClientRect();
+        let touchX;
+        if (event.touches) {
+            touchX = event.touches[0].clientX - rect.left;
+        } else {
+            touchX = event.clientX - rect.left;
+        }
+        
+        player.x = touchX - (player.width / 2);
+
+        if (player.x < 0) {
+            player.x = 0;
+        }
+        if (player.x + player.width > canvas.width) {
+            player.x = canvas.width - player.width;
+        }
+    }
+
+    canvas.addEventListener('mousemove', movePlayer);
+    canvas.addEventListener('touchmove', movePlayer, { passive: true });
+
+
+    // --- 9. การจัดการคะแนนสูงสุด (Google Sheets Integration) ---
+    // [!!!] แก้ไข URL ตรงนี้ [!!!]
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhq9Jk9vHbZnVzXTZMstIW3ZXhvD4AfFQQltTcvCnUz_NG9JgW7Cn6NThhH2kOEQ/exec'; // <--- วาง Web App URL ของคุณที่นี่
+
+    function saveScore(playerName, playerScore) {
+        const data = { name: playerName, score: playerScore };
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // สำคัญมากสำหรับ Apps Script
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            // เมื่อส่งข้อมูลสำเร็จ ให้ไปหน้า Ranking
+            populateRankingTable();
+            showScreen(rankingScreen);
+        })
+        .catch(error => {
+            console.error('Error saving score:', error);
+            alert('ไม่สามารถบันทึกคะแนนได้ กรุณาลองใหม่อีกครั้ง');
+            saveScoreButton.disabled = false;
+            saveScoreButton.textContent = "บันทึกคะแนน";
+        });
+    }
+
+    function populateRankingTable() {
+        rankingTableBody.innerHTML = '<tr><td colspan="3">กำลังโหลดอันดับ...</td></tr>';
+        
+        fetch(SCRIPT_URL)
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                const highScores = result.data;
+                rankingTableBody.innerHTML = ''; // เคลียร์ตาราง
+                
+                if (highScores.length === 0) {
+                    rankingTableBody.innerHTML = '<tr><td colspan="3">ยังไม่มีข้อมูลอันดับ</td></tr>';
+                } else {
+                    highScores.forEach((entry, index) => {
+                        const row = `<tr>
+                            <td>${index + 1}</td>
+                            <td>${escapeHTML(entry.name)}</td>
+                            <td>${entry.score}</td>
+                        </tr>`;
+                        rankingTableBody.innerHTML += row;
+                    });
+                }
+            } else {
+                 throw new Error(result.message || "Failed to load scores");
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching scores:', error);
+            rankingTableBody.innerHTML = '<tr><td colspan="3">ไม่สามารถโหลดข้อมูลได้</td></tr>';
+        });
+    }
+
+    function escapeHTML(str) {
+        if (typeof str !== 'string' || !str) return "";
+        return str.replace(/[&<>"']/g, match => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[match]));
+    }
+
+    // --- 10. การปรับขนาดหน้าจอ ---
+    function resizeCanvas() {
+        const gameAreaRect = gameArea.getBoundingClientRect();
+        canvas.width = gameAreaRect.width;
+        canvas.height = gameAreaRect.height - gameUI.offsetHeight; 
+        player.width = canvas.width * 0.16; // เพิ่มขนาด player
+        player.height = player.width * 1.4;
+        player.y = canvas.height - player.height - 10;
+
+        countdownOverlay.style.width = gameAreaRect.width + "px";
+        countdownOverlay.style.height = (gameAreaRect.height - gameUI.offsetHeight) + "px";
+        countdownOverlay.style.top = gameUI.offsetHeight + "px";
+    }
+
+    // --- 11. เริ่มต้นการทำงาน ---
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', () => {
+        showScreen(mainMenu);
+        updateSoundBtns(backgroundMusic.paused ? '🔇' : '🔊');
+        // เล่นเพลงอัตโนมัติ (บาง browser อาจต้อง interaction ก่อน)
+        backgroundMusic.volume = 0.2;
+        backgroundMusic.play().catch(()=>{});
+    });
+
+    // เพิ่มตัวแปรสำหรับปุ่มเสียง
+    const backgroundMusic = document.getElementById('background-music');
+    const menuSoundBtns = [
+        document.getElementById('menuSoundBtn1'),
+        document.getElementById('menuSoundBtn2'),
+        document.getElementById('menuSoundBtn3'),
+        document.getElementById('menuSoundBtn4')
+    ];
+    const gameSoundBtn = document.getElementById('gameSoundBtn');
+
+    // --- ฟังก์ชันเปิด/ปิดเสียง ---
+    function toggleSound() {
+        if (backgroundMusic.paused) {
+            backgroundMusic.volume = 0.2;
+            backgroundMusic.play();
+            updateSoundBtns('🔊');
+        } else {
+            backgroundMusic.pause();
+            updateSoundBtns('🔇');
+        }
+    }
+    function updateSoundBtns(icon) {
+        menuSoundBtns.forEach(btn => btn.textContent = icon);
+        gameSoundBtn.textContent = icon;
+    }
+    // sync icon เมื่อเพลงเปลี่ยนสถานะ
+    backgroundMusic.addEventListener('play', () => updateSoundBtns('🔊'));
+    backgroundMusic.addEventListener('pause', () => updateSoundBtns('🔇'));
+
+    // --- เพิ่ม Event Listener ให้ปุ่มเสียงทุกจุด ---
+    menuSoundBtns.forEach(btn => btn.addEventListener('click', toggleSound));
+    gameSoundBtn.addEventListener('click', toggleSound);
+    </script>
+</body>
+</html>
